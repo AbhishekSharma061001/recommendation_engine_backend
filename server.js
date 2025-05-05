@@ -1,49 +1,21 @@
 const express = require("express");
 const cors = require("cors");
-const OpenAI = require("openai");
-require("dotenv").config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const assessments = [
-  { id: 1, name: "Coding Assessment - Java", role: "Software Engineer", skills: ["Java", "OOPs", "DSA"], weights: [2,1,1], duration: 45, remoteSupport: "Yes", adaptiveSupport: "No", testType: "Technical" },
-  { id: 2, name: "Leadership Survey", role: "Team Lead", skills: ["Leadership", "Decision Making"], weights: [2,1], duration: 30, remoteSupport: "Yes", adaptiveSupport: "Yes", testType: "Behavioral" },
-  { id: 3, name: "Communication Skills Test", role: "Customer Support", skills: ["Communication", "Listening"], weights: [2,1], duration: 20, remoteSupport: "Yes", adaptiveSupport: "No", testType: "Behavioral" },
-  { id: 4, name: "Full Stack Developer Test", role: "Frontend Developer", skills: ["JavaScript","React","CSS"], weights: [1,2,1], duration: 60, remoteSupport: "Yes", adaptiveSupport: "Yes", testType: "Technical" },
-  { id: 5, name: "Data Analyst Challenge", role: "Data Analyst", skills: ["SQL","Python","Statistics"], weights: [1,2,1], duration: 50, remoteSupport: "Yes", adaptiveSupport: "Yes", testType: "Technical" }
+  { id: 1, name: "Coding Assessment - Java", role: "Software Engineer", skills: ["Java", "OOPs", "DSA"], weights: [2,1,1], duration: 45 },
+  { id: 2, name: "Leadership Survey", role: "Team Lead", skills: ["Leadership", "Decision Making"], weights: [2,1], duration: 30 },
+  { id: 3, name: "Communication Skills Test", role: "Customer Support", skills: ["Communication", "Listening"], weights: [2,1], duration: 20 },
+  { id: 4, name: "Full Stack Developer Test", role: "Frontend Developer", skills: ["JavaScript","React","CSS"], weights: [1,2,1], duration: 60 },
+  { id: 5, name: "Data Analyst Challenge", role: "Data Analyst", skills: ["SQL","Python","Statistics"], weights: [1,2,1], duration: 50 }
 ];
-async function extractSkillsFromDescription(text) {
-  const prompt = `Extract a JSON array of distinct skill keywords from this job description:\n"""${text}"""`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
-    messages: [{ role: "user", content: prompt }],
-    temperature: 0,
-  });
-
-  const raw = response.choices[0].message.content.trim();
-
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return raw.replace(/[^a-zA-Z,]/g, "").split(/,\s*/);
-  }
-}
-
-app.get("/recommend", async (req, res) => {
+app.get("/recommend", (req, res) => {
   const { role, skills = "", jobDescription = "" } = req.query;
-  let skillList = skills ? String(skills).split(',') : [];
-
-  if (jobDescription) {
-    const extracted = await extractSkillsFromDescription(String(jobDescription));
-    skillList = Array.from(new Set([...skillList, ...extracted]));
-  }
+  const skillList = skills ? String(skills).split(',') : [];
 
   const recs = assessments
     .filter(a => a.role === role || a.skills.some(s => skillList.includes(s)))
